@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>devops-tp-rayane</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 720px;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+      line-height: 1.5;
+    }
+    h1 { margin-bottom: 0.25rem; }
+    .subtitle { color: #666; margin-top: 0; }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .ok   { background: #d1fae5; color: #065f46; }
+    .down { background: #fee2e2; color: #991b1b; }
+    .muted { color: #888; font-size: 0.9rem; }
+    ul { padding-left: 1.25rem; }
+    code { background: rgba(127,127,127,0.15); padding: 1px 5px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>DevOps TP — Rayane</h1>
+  <p class="subtitle">Frontend Nginx · Backend Flask · PostgreSQL · k3s</p>
+
+  <div class="card">
+    <strong>Backend /health :</strong>
+    <span id="health-badge" class="badge down">…</span>
+    <div class="muted" id="health-details"></div>
+  </div>
+
+  <div class="card">
+    <strong>Backend /api/ready (DB) :</strong>
+    <span id="ready-badge" class="badge down">…</span>
+    <div class="muted" id="ready-details"></div>
+  </div>
+
+  <div class="card">
+    <strong>Utilisateurs en base :</strong>
+    <ul id="users-list"><li class="muted">chargement…</li></ul>
+  </div>
+
+  <script>
+    async function fetchJson(url) {
+      const r = await fetch(url);
+      return { ok: r.ok, status: r.status, body: await r.json().catch(() => ({})) };
+    }
+
+    (async () => {
+      const h = await fetchJson('/api/health').catch(() => null);
+      const badge = document.getElementById('health-badge');
+      if (h && h.ok) {
+        badge.textContent = 'ok';
+        badge.className = 'badge ok';
+        document.getElementById('health-details').textContent = JSON.stringify(h.body);
+      } else {
+        badge.textContent = 'unreachable';
+      }
+
+      const r = await fetchJson('/api/ready').catch(() => null);
+      const rb = document.getElementById('ready-badge');
+      if (r && r.ok) {
+        rb.textContent = 'ready';
+        rb.className = 'badge ok';
+        document.getElementById('ready-details').textContent = JSON.stringify(r.body);
+      } else {
+        rb.textContent = 'not-ready';
+        if (r) document.getElementById('ready-details').textContent = JSON.stringify(r.body);
+      }
+
+      const u = await fetchJson('/api/users').catch(() => null);
+      const list = document.getElementById('users-list');
+      list.innerHTML = '';
+      if (u && u.ok && Array.isArray(u.body)) {
+        u.body.forEach(x => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${x.name}</strong> — <code>${x.role}</code>`;
+          list.appendChild(li);
+        });
+      } else {
+        list.innerHTML = '<li class="muted">indisponible</li>';
+      }
+    })();
+  </script>
+</body>
+</html>
