@@ -166,7 +166,7 @@ Le workflow `.github/workflows/ci-cd.yml` est composé de 3 jobs chaînés :
 | `DOCKER_PASSWORD` | Token Docker Hub |
 | `VM_HOST` | IP publique VM |
 | `VM_USER` | User SSH (`azureuser`) |
-| `VM_SSH_KEY` | Clé privée SSH dédiée au CI |
+| `VM_PASSWORD` | Mot de passe SSH de la VM |
 
 **[📸 Screenshot 10 — Page Actions de GitHub avec le dernier run vert (3 jobs passés)]**
 

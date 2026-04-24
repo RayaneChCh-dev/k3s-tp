@@ -79,26 +79,18 @@ Dans un navigateur : `http://<IP_PUBLIQUE_VM>:30080`
 
 ## 6. Préparer le CI/CD (côté VM)
 
-Le job `deploy` de GitHub Actions se connecte en SSH et exécute `git pull` +
-`kubectl set image`. Il faut donc :
+Le job `deploy` de GitHub Actions se connecte en SSH (authentification par
+mot de passe) et exécute `git pull` + `kubectl set image`. Il faut donc :
 
-1. Avoir une clé SSH dont la **clé publique** est dans `~/.ssh/authorized_keys`
-   de la VM, et dont la **clé privée** est stockée dans le secret GitHub
-   `VM_SSH_KEY`.
+1. Que le password SSH de la VM soit stocké dans le secret GitHub
+   `VM_PASSWORD`.
 2. Que le repo soit déjà cloné sur la VM dans `~/devops-tp-rayane` (le job
    `git fetch && git reset --hard origin/main`).
 
-### Générer une clé dédiée au CI (depuis ton poste)
-
-```bash
-ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/devops-tp-ci -N ""
-
-# Ajouter la clé publique sur la VM
-ssh-copy-id -i ~/.ssh/devops-tp-ci.pub azureuser@<IP_PUBLIQUE_VM>
-
-# Récupérer la clé privée à coller dans le secret VM_SSH_KEY
-cat ~/.ssh/devops-tp-ci
-```
+> **Note sécurité** : en production on utiliserait une clé SSH dédiée plutôt
+> qu'un mot de passe. Pour ce TP l'authentification par password est
+> acceptée car la VM est éphémère et le password protégé par les secrets
+> GitHub.
 
 ## Récap des secrets GitHub Actions à créer
 
@@ -108,4 +100,4 @@ cat ~/.ssh/devops-tp-ci
 | `DOCKER_PASSWORD` | Token Docker Hub (pas le mot de passe du compte) |
 | `VM_HOST`         | IP publique de la VM (`74.161.44.42`) |
 | `VM_USER`         | `azureuser` (ou le user SSH de la VM) |
-| `VM_SSH_KEY`      | Contenu complet de la clé privée SSH (`-----BEGIN OPENSSH PRIVATE KEY-----…`) |
+| `VM_PASSWORD`     | Mot de passe SSH de la VM |

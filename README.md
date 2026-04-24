@@ -121,7 +121,7 @@ Secrets à créer dans **Settings → Secrets → Actions** :
 | `DOCKER_PASSWORD` | Token Docker Hub |
 | `VM_HOST` | `74.161.44.42` |
 | `VM_USER` | `azureuser` |
-| `VM_SSH_KEY` | Clé privée SSH (voir `docs/VM_SETUP.md`) |
+| `VM_PASSWORD` | Mot de passe SSH de la VM |
 
 ## Déploiement Kubernetes (manuel, première fois sur la VM)
 
