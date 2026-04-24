@@ -70,3 +70,47 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_FRONTEND }}:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+
+  deploy:
+    name: Deploy to Azure VM (k3s)
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            export KUBECONFIG=$HOME/.kube/config
+
+            # Pull des images côté VM (utile si le runtime ne le fait pas)
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+
+            # Appliquer les manifests (idempotent)
+            cd ~/devops-tp-rayane
+            git fetch --all
+            git reset --hard origin/main
+
+            kubectl apply -f k8s/namespace.yml
+            kubectl apply -f k8s/secret.yml
+            kubectl apply -f k8s/db-deployment.yml
+            kubectl apply -f k8s/backend-deployment.yml
+            kubectl apply -f k8s/frontend-deployment.yml
+
+            # Mettre à jour les images avec le tag du commit courant
+            kubectl -n ${{ env.K8S_NAMESPACE }} set image deployment/backend \
+              backend=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_BACKEND }}:${{ github.sha }}
+            kubectl -n ${{ env.K8S_NAMESPACE }} set image deployment/frontend \
+              frontend=${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
+
+            # Attendre la fin du rollout (échec = pipeline rouge)
+            kubectl -n ${{ env.K8S_NAMESPACE }} rollout status deployment/backend --timeout=120s
+            kubectl -n ${{ env.K8S_NAMESPACE }} rollout status deployment/frontend --timeout=120s
+
+            kubectl -n ${{ env.K8S_NAMESPACE }} get pods -o wide
