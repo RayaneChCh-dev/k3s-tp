@@ -93,7 +93,7 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_FRONTEND }}:${{ github.sha }}
 
             # Appliquer les manifests (idempotent)
-            cd ~/devops-tp-rayane
+            cd ~/k3s-tp
             git fetch --all
             git reset --hard origin/main
 
